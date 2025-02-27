@@ -7,14 +7,14 @@ interface ItemProp {
     icon: ReactElement,
     navigate: NavigateFunction,
     path: string,
-    open: boolean,
 }
 
-function SideBarItem({ name, icon, navigate, path, open }: ItemProp) {
+function SideBarItem({ name, icon, navigate, path }: ItemProp) {
     return (
         <ListItemButton
             sx={{
-                width: '100%'
+                width: '100%',
+                height: '2.5em'
             }}
             onClick={() => { navigate(path) }}
         >
