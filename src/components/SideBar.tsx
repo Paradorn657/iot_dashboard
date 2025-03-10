@@ -17,7 +17,6 @@ interface RequireItemProp {
 
 const options: RequireItemProp[] = [
     { name: 'Index', path: '/', icon: <HomeIcon /> },
-    { name: 'Graph', path: '/graph', icon: <EqualizerIcon /> }
 ]
 
 function SideBar({ navigate }: BarProp) {

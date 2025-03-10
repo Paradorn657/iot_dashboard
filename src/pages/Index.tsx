@@ -30,6 +30,7 @@ function Index() {
     Device2: null
   });
   const [publishLoading, setPublishLoading] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);  // เพิ่มสถานะการส่งข้อมูล
   const [publishStatus, setPublishStatus] = useState<{
     success: boolean;
     message: string;
@@ -96,7 +97,7 @@ function Index() {
     setPublishStatus({ ...publishStatus, visible: false });
 
     try {
-      const response = await fetch('http://localhost:5174/publish', { // ระบุ URL ที่ถูกต้อง
+      const response = await fetch('http://localhost:5174/publish', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,6 +111,7 @@ function Index() {
           message: 'ส่งข้อมูลน้ำฝน 555 ไปยัง API Express สำเร็จ',
           visible: true,
         });
+        setIsPublished(true); // อัพเดทสถานะว่าได้ส่งข้อมูลแล้ว
       } else {
         setPublishStatus({
           success: false,
@@ -134,12 +136,12 @@ function Index() {
     }
   };
 
-  const cancelpublishRainData = async () => {
+  const cancelPublishRainData = async () => {
     setPublishLoading(true);
     setPublishStatus({ ...publishStatus, visible: false });
 
     try {
-      const response = await fetch('http://localhost:5174/cancel-publish', { // ระบุ URL ที่ถูกต้อง
+      const response = await fetch('http://localhost:5174/cancel-publish', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,21 +152,22 @@ function Index() {
       if (response.ok) {
         setPublishStatus({
           success: true,
-          message: 'ยกเลิก ไปยัง API Express สำเร็จ',
+          message: 'ยกเลิกการส่งข้อมูลไปยัง API Express สำเร็จ',
           visible: true,
         });
+        setIsPublished(false); // อัพเดทสถานะว่าได้ยกเลิกการส่งข้อมูลแล้ว
       } else {
         setPublishStatus({
           success: false,
-          message: 'เกิดข้อผิดพลาดในการยกเลิก API Express',
+          message: 'เกิดข้อผิดพลาดในการยกเลิกการส่งข้อมูลไปยัง API Express',
           visible: true,
         });
       }
     } catch (error) {
-      console.error('Error publishing rain data to Express API:', error);
+      console.error('Error cancelling rain data to Express API:', error);
       setPublishStatus({
         success: false,
-        message: `เกิดข้อผิดพลาด: ${error.message || 'ไม่สามารถส่งข้อมูลได้'}`,
+        message: `เกิดข้อผิดพลาด: ${error.message || 'ไม่สามารถยกเลิกการส่งข้อมูลได้'}`,
         visible: true,
       });
     } finally {
@@ -177,7 +180,6 @@ function Index() {
     }
   };
 
-
   // เกณฑ์ค่าน้ำฝนที่ปรับปรุงตามความต้องการ
   const getRainStatus = (value: number | null) => {
     if (value === null) return "ไม่มีข้อมูล";
@@ -187,16 +189,31 @@ function Index() {
     return "ไม่สามารถระบุสถานะได้";
   };
 
+  // ฟังก์ชันสำหรับกำหนดสีของสถานะน้ำฝน
+  const getRainStatusColor = (value: number | null) => {
+    if (value === null) return "#9e9e9e"; // สีเทา
+    if (value >= 800 && value <= 1024) return "#4caf50"; // สีเขียว
+    if (value >= 400 && value < 800) return "#ff9800"; // สีส้ม
+    if (value > 0 && value < 400) return "#f44336"; // สีแดง
+    return "#9e9e9e"; // สีเทา
+  };
+
   // Custom tooltip สำหรับกราฟ
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <Paper style={{ padding: '10px', backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
-          <Typography variant="body2">เวลา: {label}</Typography>
-          <Typography variant="body2" color={payload[0].color}>
+        <Paper style={{ padding: '10px', backgroundColor: 'rgba(255, 255, 255, 0.9)', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+          <Typography variant="body2" style={{ fontWeight: 'bold' }}>เวลา: {label}</Typography>
+          <Typography variant="body2" color={payload[0].color} style={{ margin: '5px 0' }}>
             ค่าน้ำฝน: {payload[0].value !== null ? payload[0].value : 'ไม่มีข้อมูล'}
           </Typography>
-          <Typography variant="body2">
+          <Typography 
+            variant="body2" 
+            style={{ 
+              color: getRainStatusColor(payload[0].value),
+              fontWeight: 'bold'
+            }}
+          >
             สถานะ: {getRainStatus(payload[0].value)}
           </Typography>
         </Paper>
@@ -207,20 +224,45 @@ function Index() {
 
   return (
     <Container maxWidth="lg">
-      <Box my={4} >
-        <Typography variant="h4" gutterBottom style={{ textAlign: 'center' }}>
+      <Box my={4}>
+        <Typography variant="h4" gutterBottom style={{ textAlign: 'center', fontWeight: 'bold', color: '#3f51b5', marginBottom: '24px' }}>
           ระบบติดตามข้อมูลน้ำฝน
         </Typography>
         
-          {/* ปุ่มส่งข้อมูลน้ำฝน */}
-          <Box display="flex" flexDirection="column" gap={1} alignItems="center" mb={4}>
+        {/* ปุ่มส่งข้อมูลน้ำฝนและยกเลิก */}
+        <Box 
+          display="flex" 
+          flexDirection="column"
+          gap={2} 
+          alignItems="center" 
+          mb={4} 
+          sx={{
+            backgroundColor: 'rgba(63, 81, 181, 0.05)',
+            borderRadius: '8px',
+            padding: '20px',
+            marginBottom: '30px'
+          }}
+        >
+          <Typography variant="h6" style={{ marginBottom: '10px' }}>การควบคุมอุปกรณ์</Typography>
+          
+          <Box display="flex" gap={2} width="100%" maxWidth="500px" justifyContent="center">
             <Button
               variant="contained"
               color="primary"
               size="large"
               onClick={publishRainData}
-              disabled={publishLoading}
-              style={{ minWidth: '250px' }}
+              disabled={publishLoading || isPublished} // ปิดการใช้งานเมื่อกำลังส่งข้อมูลหรือได้ส่งข้อมูลแล้ว
+              fullWidth
+              sx={{
+                py: 1.5,
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 8px rgba(63, 81, 181, 0.2)',
+                backgroundColor: isPublished ? 'rgba(63, 81, 181, 0.3)' : '#3f51b5',
+                '&:hover': {
+                  backgroundColor: '#303f9f'
+                }
+              }}
             >
               {publishLoading ? (
                 <>
@@ -234,100 +276,152 @@ function Index() {
 
             <Button
               variant="contained"
-              color="primary"
+              color="error"
               size="large"
-              onClick={cancelpublishRainData}
-              disabled={publishLoading}
-              style={{ minWidth: '250px' }}
+              onClick={cancelPublishRainData}
+              disabled={publishLoading || !isPublished} // ปิดการใช้งานเมื่อกำลังส่งข้อมูลหรือยังไม่ได้ส่งข้อมูล
+              fullWidth
+              sx={{
+                py: 1.5,
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 8px rgba(244, 67, 54, 0.2)',
+                backgroundColor: !isPublished ? 'rgba(244, 67, 54, 0.3)' : '#f44336',
+                '&:hover': {
+                  backgroundColor: '#d32f2f'
+                }
+              }}
             >
               {publishLoading ? (
                 <>
                   <CircularProgress size={24} color="inherit" style={{ marginRight: '10px' }} />
-                  กำลังส่งข้อมูล...
+                  กำลังยกเลิก...
                 </>
               ) : (
-                "ยกเลิก"
+                "ยกเลิกการส่งข้อมูล"
               )}
             </Button>
+          </Box>
 
-            {/* แสดงสถานะการส่งข้อมูล */}
-            {publishStatus.visible && (
-              <Paper
-                elevation={1}
-                style={{
-                  marginTop: '10px',
-                  padding: '8px 16px',
-                  backgroundColor: publishStatus.success ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
-                  color: publishStatus.success ? '#388e3c' : '#d32f2f',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <Typography>{publishStatus.message}</Typography>
-              </Paper>
-            )}
+          {/* แสดงสถานะการส่งข้อมูล */}
+          {publishStatus.visible && (
+            <Paper
+              elevation={3}
+              style={{
+                width: '100%',
+                maxWidth: '500px',
+                padding: '12px 20px',
+                backgroundColor: publishStatus.success ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+                color: publishStatus.success ? '#388e3c' : '#d32f2f',
+                borderLeft: publishStatus.success ? '4px solid #388e3c' : '4px solid #d32f2f',
+                borderRadius: '4px',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <Typography fontWeight="medium">{publishStatus.message}</Typography>
+            </Paper>
+          )}
         </Box>
+
         {loading ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
+          <Box display="flex" justifyContent="center" my={6} flexDirection="column" alignItems="center">
+            <CircularProgress size={48} />
+            <Typography variant="body1" mt={2}>กำลังโหลดข้อมูลน้ำฝน...</Typography>
           </Box>
         ) : (
           <>
             {/* Dashboard สรุปข้อมูลล่าสุด */}
             <Grid container spacing={3} mb={4}>
-              {Object.keys(latestReadings).map((deviceKey, index) => (
+              {Object.keys(latestReadings).map((deviceKey, index) => {
+                const rainValue = latestReadings[deviceKey];
+                const statusColor = getRainStatusColor(rainValue);
+                
+                return (
                 <Grid item xs={12} md={6} key={deviceKey}>
                   <Paper
                     elevation={3}
                     style={{
-                      padding: '20px',
+                      padding: '24px',
                       textAlign: 'center',
-                      backgroundColor: latestReadings[deviceKey] !== null &&
-                        ((latestReadings[deviceKey]! >= 400 && latestReadings[deviceKey]! < 800) ||
-                          (latestReadings[deviceKey]! > 0 && latestReadings[deviceKey]! < 400))
-                        ? 'rgba(63, 81, 181, 0.1)'
-                        : 'white'
+                      borderRadius: '8px',
+                      borderTop: `5px solid ${DEVICE_COLORS[index]}`,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center'
                     }}
                   >
-                    <Typography variant="h6">{DEVICE_NAMES[index]}</Typography>
+                    <Typography variant="h6" fontWeight="bold" color={DEVICE_COLORS[index]}>
+                      {DEVICE_NAMES[index]}
+                    </Typography>
                     <Typography
                       variant="h3"
                       style={{
                         color: DEVICE_COLORS[index],
-                        margin: '10px 0'
+                        margin: '16px 0',
+                        fontWeight: 'bold'
                       }}
                     >
                       {latestReadings[deviceKey] !== null ? latestReadings[deviceKey] : 'N/A'}
                     </Typography>
-                    <Typography variant="body1">
-                      สถานะ: {getRainStatus(latestReadings[deviceKey])}
-                    </Typography>
+                    <Box 
+                      sx={{
+                        backgroundColor: `${statusColor}20`,
+                        borderRadius: '20px',
+                        padding: '6px 16px',
+                        display: 'inline-block',
+                        margin: '0 auto'
+                      }}
+                    >
+                      <Typography 
+                        variant="body1" 
+                        fontWeight="medium"
+                        style={{ color: statusColor }}
+                      >
+                        {getRainStatus(latestReadings[deviceKey])}
+                      </Typography>
+                    </Box>
                   </Paper>
                 </Grid>
-              ))}
+              )})}
             </Grid>
 
             {/* กราฟแยกตาม Device */}
             <Grid container spacing={3}>
               {Object.keys(rainValues).map((deviceKey, index) => (
                 <Grid item xs={12} key={deviceKey}>
-                  <Paper elevation={3} style={{ padding: '20px' }}>
-                    <Typography variant="h6" gutterBottom>{DEVICE_NAMES[index]}</Typography>
+                  <Paper 
+                    elevation={3} 
+                    style={{ 
+                      padding: '24px', 
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <Typography variant="h6" gutterBottom fontWeight="bold" color={DEVICE_COLORS[index]}>
+                      {DEVICE_NAMES[index]}
+                    </Typography>
                     <ResponsiveContainer width="100%" height={300}>
                       <AreaChart data={rainValues[deviceKey]}>
-                        <CartesianGrid strokeDasharray="3 3" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
                         <XAxis
                           dataKey="timestamp"
                           type="category"
                           reversed={true}
                           tick={{ fontSize: 12 }}
+                          tickLine={false}
+                          axisLine={{ stroke: '#e0e0e0' }}
                         />
                         <YAxis
                           label={{
                             value: 'ปริมาณน้ำฝน',
                             angle: -90,
                             position: 'insideLeft',
-                            style: { textAnchor: 'middle' }
+                            style: { textAnchor: 'middle', fill: '#666' }
                           }}
+                          tickLine={false}
+                          axisLine={{ stroke: '#e0e0e0' }}
                         />
                         <Tooltip content={<CustomTooltip />} />
                         <Area
@@ -338,6 +432,7 @@ function Index() {
                           fillOpacity={0.3}
                           name={DEVICE_NAMES[index]}
                           connectNulls
+                          activeDot={{ r: 8, strokeWidth: 0 }}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -348,26 +443,37 @@ function Index() {
 
             {/* กราฟรวม */}
             <Grid item xs={12} mt={3}>
-              <Paper elevation={3} style={{ padding: '20px' }}>
-                <Typography variant="h6" gutterBottom>เปรียบเทียบข้อมูลทั้งหมด</Typography>
+              <Paper 
+                elevation={3} 
+                style={{ 
+                  padding: '24px', 
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }}
+              >
+                <Typography variant="h6" gutterBottom fontWeight="bold">เปรียบเทียบข้อมูลทั้งหมด</Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart>
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
                     <XAxis
                       dataKey="timestamp"
                       type="category"
                       allowDuplicatedCategory={false}
                       tick={{ fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#e0e0e0' }}
                     />
                     <YAxis
                       label={{
                         value: 'ปริมาณน้ำฝน',
                         angle: -90,
                         position: 'insideLeft',
-                        style: { textAnchor: 'middle' }
+                        style: { textAnchor: 'middle', fill: '#666' }
                       }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#e0e0e0' }}
                     />
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     {Object.keys(rainValues).map((deviceKey, index) => (
                       <Line
@@ -377,7 +483,8 @@ function Index() {
                         dataKey="rain"
                         stroke={DEVICE_COLORS[index]}
                         name={DEVICE_NAMES[index]}
-                        dot={{ stroke: DEVICE_COLORS[index], strokeWidth: 2 }}
+                        strokeWidth={2}
+                        dot={{ stroke: DEVICE_COLORS[index], strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 8 }}
                         connectNulls
                       />

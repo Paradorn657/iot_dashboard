@@ -3,8 +3,6 @@ import SideBar from "./components/SideBar"
 import Index from "./pages/Index"
 import NotFound from "./pages/NotFound"
 import { Box,  Paper } from "@mui/material"
-import Graph from "./pages/Graph"
-
 function App() {
   const navigate = useNavigate()
 
@@ -18,7 +16,7 @@ function App() {
           }}>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/graph" element={<Graph />} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Paper>
