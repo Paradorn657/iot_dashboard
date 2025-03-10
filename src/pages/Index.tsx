@@ -207,66 +207,65 @@ function Index() {
 
   return (
     <Container maxWidth="lg">
-      <Box my={4}>
+      <Box my={4} >
         <Typography variant="h4" gutterBottom style={{ textAlign: 'center' }}>
           ระบบติดตามข้อมูลน้ำฝน
         </Typography>
-
-        {/* ปุ่มส่งข้อมูลน้ำฝน */}
-        <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={publishRainData}
-            disabled={publishLoading}
-            style={{ minWidth: '250px' }}
-          >
-            {publishLoading ? (
-              <>
-                <CircularProgress size={24} color="inherit" style={{ marginRight: '10px' }} />
-                กำลังส่งข้อมูล...
-              </>
-            ) : (
-              "ส่งค่าน้ำฝน 600 ไปยังทุกอุปกรณ์"
-            )}
-          </Button>
-
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={cancelpublishRainData}
-            disabled={publishLoading}
-            style={{ minWidth: '250px' }}
-          >
-            {publishLoading ? (
-              <>
-                <CircularProgress size={24} color="inherit" style={{ marginRight: '10px' }} />
-                กำลังส่งข้อมูล...
-              </>
-            ) : (
-              "ยกเลิก"
-            )}
-          </Button>
-
-          {/* แสดงสถานะการส่งข้อมูล */}
-          {publishStatus.visible && (
-            <Paper
-              elevation={1}
-              style={{
-                marginTop: '10px',
-                padding: '8px 16px',
-                backgroundColor: publishStatus.success ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
-                color: publishStatus.success ? '#388e3c' : '#d32f2f',
-                transition: 'all 0.3s ease'
-              }}
+        
+          {/* ปุ่มส่งข้อมูลน้ำฝน */}
+          <Box display="flex" flexDirection="column" gap={1} alignItems="center" mb={4}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={publishRainData}
+              disabled={publishLoading}
+              style={{ minWidth: '250px' }}
             >
-              <Typography>{publishStatus.message}</Typography>
-            </Paper>
-          )}
-        </Box>
+              {publishLoading ? (
+                <>
+                  <CircularProgress size={24} color="inherit" style={{ marginRight: '10px' }} />
+                  กำลังส่งข้อมูล...
+                </>
+              ) : (
+                "ส่งค่าน้ำฝน 555 ไปยังทุกอุปกรณ์"
+              )}
+            </Button>
 
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={cancelpublishRainData}
+              disabled={publishLoading}
+              style={{ minWidth: '250px' }}
+            >
+              {publishLoading ? (
+                <>
+                  <CircularProgress size={24} color="inherit" style={{ marginRight: '10px' }} />
+                  กำลังส่งข้อมูล...
+                </>
+              ) : (
+                "ยกเลิก"
+              )}
+            </Button>
+
+            {/* แสดงสถานะการส่งข้อมูล */}
+            {publishStatus.visible && (
+              <Paper
+                elevation={1}
+                style={{
+                  marginTop: '10px',
+                  padding: '8px 16px',
+                  backgroundColor: publishStatus.success ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+                  color: publishStatus.success ? '#388e3c' : '#d32f2f',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <Typography>{publishStatus.message}</Typography>
+              </Paper>
+            )}
+        </Box>
         {loading ? (
           <Box display="flex" justifyContent="center" my={4}>
             <CircularProgress />
